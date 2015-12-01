@@ -43,13 +43,92 @@ public class Server {
     private static class Syncer extends Thread {
         private Socket socket;
         private int clientNumber;
+        private BufferedReader in;
+        private PrintWriter out;
 
         public Syncer(Socket socket, int clientNumber) {
             this.socket = socket;
             this.clientNumber = clientNumber;
             log("New connection with client # " + clientNumber + " at " + socket);
+            try {
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+	            out = new PrintWriter(socket.getOutputStream(), true);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
         }
 
+        /**
+         * Responds to a CREATE request by writing the file specified by the client to the current directory.
+         * 
+         * ACKs with "REC".
+         * 
+         * @throws IOException
+         */
+        public void respondToCreateRequest() throws IOException {
+        	// get file from client and write to server
+        	
+        	String fileName = in.readLine();
+        	
+        	PrintWriter file = new PrintWriter(new BufferedWriter(new FileWriter(fileName)));
+        	
+        	String fileLine = in.readLine();
+        	
+        	// write to file
+        	System.out.println("Writing to file: " + fileName);
+        	while (!fileLine.equals("END")) {
+        		file.println(fileLine);
+        		fileLine = in.readLine();
+        	}
+        	                    	
+        	file.close();	
+        	System.out.println("file created: " + fileName);
+        	
+        	out.println("REC");		// tell the client that the file was created successfully
+        }
+        
+        /**
+         * Responds to a GET request by getting the file specified by the client from the current directory and sending it to the client.
+         * 
+         * Sends "END" to the client when the file has been sent
+         * 
+         * @throws IOException
+         */
+        public void respondToGetRequest() throws IOException {
+        	String fileName = in.readLine();
+        	
+        	BufferedReader file = new BufferedReader(new FileReader(fileName));
+        	
+        	System.out.println("Sending contents of file: " + fileName + " to client # " + this.clientNumber);
+        	
+        	String fileLine = file.readLine();
+        	while (fileLine != null) {
+        		out.println(fileLine);
+        		fileLine = file.readLine();
+        	}
+        	
+        	file.close();
+        	
+        	System.out.println("Done sending file: " + fileName + " to client # " + this.clientNumber);
+        	
+        	out.println("END");
+        	
+        	String response;
+        	
+        	try {
+ 	        	response = in.readLine();
+ 	        	if (response == null || response.equals("")) {
+ 	                System.exit(0);
+ 	            }
+ 	        	
+ 	        	 if (response.equals("REC")) {
+      	        	System.out.println("Client # " + this.clientNumber + " created file: " + fileName + " successfully");
+      	        }
+ 	        } catch (IOException e) {
+ 	        	e.printStackTrace();
+ 	        }
+        }
+        
         /**
          * Services this thread's client by repeatedly reading strings
          * and sending back the modified version of the file if necessary.
@@ -57,12 +136,7 @@ public class Server {
         public void run() {
             try {
 
-                // Decorate the streams so we can send characters
-                // and not just bytes.  Ensure output is flushed
-                // after every newline.
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+               
 
                 // Get messages from the client, line by line;
                 while (true) {
@@ -74,60 +148,11 @@ public class Server {
                     
                     System.out.println("received line from client # " + this.clientNumber + ": " + lineFromClient);
                     
-                    if (lineFromClient.equals("INIT")) {
-                    	// get file from client and write to server
-                    	
-                    	String fileName = in.readLine();	// file name
-                    	
-                    	PrintWriter file = new PrintWriter(new BufferedWriter(new FileWriter(fileName)));
-                    	
-                    	String fileLine = in.readLine();
-                    	
-                    	// write to file
-                    	System.out.println("Writing to file: " + fileName);
-                    	while (!fileLine.equals("END")) {
-                    		file.println(fileLine);
-                    		fileLine = in.readLine();
-                    	}
-                    	                    	
-                    	file.close();	
-                    	System.out.println("file created: " + fileName);
-                    	
-                    	out.println("REC");		// tell the client that the file was created successfully
+                    if (lineFromClient.equals("CREATE")) {
+                    	this.respondToCreateRequest();
                     	
                     } else if (lineFromClient.equals("GET")) {
-                    	String fileName = in.readLine();	// file name
-                    	
-                    	BufferedReader file = new BufferedReader(new FileReader(fileName));
-                    	
-                    	System.out.println("Sending contents of file: " + fileName + " to client # " + this.clientNumber);
-                    	
-                    	String fileLine = file.readLine();
-                    	while (fileLine != null) {
-                    		out.println(fileLine);
-                    		fileLine = file.readLine();
-                    	}
-                    	
-                    	file.close();
-                    	
-                    	System.out.println("Done sending file: " + fileName + " to client # " + this.clientNumber);
-                    	
-                    	out.println("END");
-                    	
-                    	String response;
-                    	
-                    	try {
-             	        	response = in.readLine();
-             	        	if (response == null || response.equals("")) {
-             	                System.exit(0);
-             	            }
-             	        	
-             	        	 if (response.equals("REC")) {
-                  	        	System.out.println("Client # " + this.clientNumber + " created file: " + fileName + " successfully");
-                  	        }
-             	        } catch (IOException e) {
-             	        	e.printStackTrace();
-             	        }
+                    	this.respondToGetRequest();
                     	
                     	
                     }
