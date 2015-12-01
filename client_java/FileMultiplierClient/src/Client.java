@@ -34,11 +34,11 @@ public class Client {
      */
     public void sendGetRequest(String fileName) {
     	out.println("GET");
-		System.out.println("Enter a file name:");
+		log("Enter a file name:");
 		
 		out.println(fileName);
 		
-		System.out.println("Getting file: " + fileName + " from server");
+		log("Getting file: " + fileName + " from server");
 		
 		String response;
 		 try {
@@ -56,7 +56,7 @@ public class Client {
         	
         	file.close();
         	
-        	System.out.println("File: " + fileName + " copied to local machine from server");
+        	log("File: " + fileName + " copied to local machine from server");
         	
         	out.println("REC");
         } catch (IOException e) {
@@ -78,7 +78,7 @@ public class Client {
 			BufferedReader file = new BufferedReader(new FileReader(fileName));
 			out.println(fileName);
 			
-        	System.out.println("Sending contents of file: " + fileName + " to server");
+        	log("Sending contents of file: " + fileName + " to server");
 			
 			String fileLine = file.readLine();
 			while (fileLine != null) {
@@ -87,7 +87,7 @@ public class Client {
 			}
 			file.close();
 			
-			System.out.println("File: " + fileName + " sent to server");
+			log("File: " + fileName + " sent to server");
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -103,7 +103,7 @@ public class Client {
             }
         	
         	if (response.equals("REC")) {
-        		System.out.println("Server created file: " + fileName + " successfully");
+        		log("Server created file: " + fileName + " successfully");
         	}
         } catch (IOException e) {
         	e.printStackTrace();
@@ -114,7 +114,7 @@ public class Client {
     	
 //   	 BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
          for (;;) {
-// 	        System.out.println("Enter a message:");
+// 	        log("Enter a message:");
 // 	        String lineFromUser = null;
 // 			try {
 // 				lineFromUser = inFromUser.readLine();
@@ -131,7 +131,7 @@ public class Client {
 // 				this.sendGetRequest("test.text");
 // 			}
         	 
-        	this.sendGetRequest("test.text");
+        	this.sendGetRequest("test.txt");
         	
         	try {
         	    Thread.sleep(1000);
@@ -146,6 +146,13 @@ public class Client {
 // 		} catch (IOException e) {
 // 			e.printStackTrace();
 // 		}
+    }
+    
+    /**
+     * Logs a simple message to stout.
+     */
+    private void log(String message) {
+        System.out.println(message);
     }
     
     public static void main(String[] args) throws Exception {

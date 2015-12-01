@@ -75,14 +75,14 @@ public class Server {
         	String fileLine = in.readLine();
         	
         	// write to file
-        	System.out.println("Writing to file: " + fileName);
+        	log("Writing to file: " + fileName);
         	while (!fileLine.equals("END")) {
         		file.println(fileLine);
         		fileLine = in.readLine();
         	}
         	                    	
         	file.close();	
-        	System.out.println("file created: " + fileName);
+        	log("file created: " + fileName);
         	
         	out.println("REC");		// tell the client that the file was created successfully
         }
@@ -99,7 +99,7 @@ public class Server {
         	
         	BufferedReader file = new BufferedReader(new FileReader(fileName));
         	
-        	System.out.println("Sending contents of file: " + fileName + " to client # " + this.clientNumber);
+        	log("Sending contents of file: " + fileName + " to client # " + this.clientNumber);
         	
         	String fileLine = file.readLine();
         	while (fileLine != null) {
@@ -109,7 +109,7 @@ public class Server {
         	
         	file.close();
         	
-        	System.out.println("Done sending file: " + fileName + " to client # " + this.clientNumber);
+        	log("Done sending file: " + fileName + " to client # " + this.clientNumber);
         	
         	out.println("END");
         	
@@ -122,7 +122,7 @@ public class Server {
  	            }
  	        	
  	        	 if (response.equals("REC")) {
-      	        	System.out.println("Client # " + this.clientNumber + " created file: " + fileName + " successfully");
+      	        	log("Client # " + this.clientNumber + " created file: " + fileName + " successfully");
       	        }
  	        } catch (IOException e) {
  	        	e.printStackTrace();
@@ -142,11 +142,11 @@ public class Server {
                 while (true) {
 
                     String lineFromClient = in.readLine();
-//                    if (lineFromClient == null) {
-//                        break;
-//                    }
+                    if (lineFromClient == null) {
+                        break;
+                    }
                     
-                    System.out.println("received line from client # " + this.clientNumber + ": " + lineFromClient);
+                    log("received line from client # " + this.clientNumber + ": " + lineFromClient);
                     
                     if (lineFromClient.equals("CREATE")) {
                     	this.respondToCreateRequest();
@@ -179,3 +179,28 @@ public class Server {
         }
     }
 }
+
+
+
+
+
+
+
+/*
+Questions:
+
+- How does the client get the updated files from the server without conflicts? For example, lets say the user is editing the file on the client side. If the server sends an
+  update to the file, it will overwrite any changes the user makes. The only solution I can think of is making sure users use an editor that saves extremely frequently.
+  
+- If two or more clients make changes to the same file at around same time, the server might be writing to the file at the same time via two or more different threads.
+  This is a concurrency issue that needs to be avoided. I can think of two solutions:
+  	1. Making clients send a timestamp along with the file so that we can keep a linear history of file changes. We will also have to keep multiple versions of the same file
+  	   since we don't want multiple threads writing at the same time. The server will then loop through the history and apply the file changes one by one.
+  	2. Making clients send a token requesting access to the file. The server keeps a queue of tokens and allows access one by one. The problem with this approach is network
+  	   latency however (linear file history might not be preserved).
+  
+  The problem with both of these approaches is that we want users to be able to edit in real time. If many users are editing the file at once it might take a very long time
+  before the user sees the most recent file.
+
+
+*/
